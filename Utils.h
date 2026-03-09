@@ -9,6 +9,16 @@
 
 #include "associated.h"
 
+static BOOL CALLBACK EnumWindowsProc(
+	_In_ HWND   hwnd,
+	_In_ LPARAM lParam
+)
+{
+	auto processIDs = (std::vector<DWORD>*)lParam;
+	processIDs->push_back(0);
+	GetWindowThreadProcessId(hwnd, LPDWORD(&processIDs->back()));
+}
+
 static void outputLog(HWND hWndLog, LPCWSTR text)
 {
 	int len = GetWindowTextLength(hWndLog);
@@ -106,7 +116,7 @@ public:
 	BStr(const wchar_t* str) : data(::SysAllocString(str)) {}
 	BStr(const std::string& s) :data(nullptr) { FromUtf8(s); }
 	BStr& operator=(const std::string& s) { return FromUtf8(s); }
-	~BStr() { ::SysFreeString(data); }
+	~BStr() { if(data){::SysFreeString(data);} }
 	operator BSTR() { return data; }
 	BSTR* operator&() { ::SysFreeString(data); data = nullptr; return &data; }
 	bool operator==(const wchar_t* p) const { return std::wstring(p) == data; }

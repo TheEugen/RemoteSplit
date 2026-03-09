@@ -46,7 +46,8 @@ class AXClientSite :
 	public IDispatch,
 	public IAdviseSink,
 	public IOleInPlaceSite,
-	public IOleInPlaceFrame
+	public IOleInPlaceFrame,
+	public IOleCache
 {
 protected:
 
@@ -128,6 +129,23 @@ public:
 	HRESULT _stdcall Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS FAR* pDispParams, VARIANT FAR* pVarResult, EXCEPINFO FAR* pExcepInfo, unsigned int FAR* puArgErr);
 
 	// IOleControlSite Methods
+	// IOleCache Methods
+	HRESULT _stdcall Cache(
+		/* [unique][in] */ __RPC__in_opt FORMATETC* pformatetc,
+		/* [in] */ DWORD advf,
+		/* [out] */ __RPC__out DWORD* pdwConnection);
+	HRESULT _stdcall Uncache(
+		/* [in] */ DWORD dwConnection);
+	HRESULT _stdcall EnumCache(
+		/* [out] */ __RPC__deref_out_opt IEnumSTATDATA** ppenumSTATDATA);
+	HRESULT _stdcall InitCache(
+		/* [unique][in] */ __RPC__in_opt IDataObject* pDataObject);
+	HRESULT _stdcall SetData(
+		/* [unique][in] */ __RPC__in_opt FORMATETC* pformatetc,
+		/* [unique][in] */ __RPC__in_opt STGMEDIUM* pmedium,
+		/* [in] */ BOOL fRelease);
+
+	
 };
 
 

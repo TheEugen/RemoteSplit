@@ -3,11 +3,12 @@
 
 #include <windows.h>
 #include <comdef.h>
-#ifndef WINCE
-#include <exdisp.h>
-#include <oledlg.h>
-#endif
+
 #include "associated.h"
+
+//#include <oleidl.h>
+
+//#pragma comment (lib, "Ole32.lib")
 
 
 #pragma warning (disable: 4244)
@@ -51,7 +52,14 @@ STDMETHODIMP AXClientSite::QueryInterface(REFIID iid, void** ppvObject)
 			*ppvObject = (IOleInPlaceFrame*)this;
 		if (iid == IID_IOleInPlaceUIWindow)
 			*ppvObject = (IOleInPlaceUIWindow*)this;
+
+		
+		//if (iid == IID_IOleInPlaceSiteEx)
+			//*ppvObject = (IOleInPlaceSiteEx*)this;
 	}
+
+	if (iid == IID_IOleCache)
+		*ppvObject = (IOleCache*)this;
 
 	//* Log Call
 	if (*ppvObject)
@@ -281,6 +289,31 @@ HRESULT _stdcall AXClientSite::GetIDsOfNames(
 	return E_NOTIMPL;
 }
 
+HRESULT _stdcall AXClientSite::Cache(
+	/* [unique][in] */ __RPC__in_opt FORMATETC* pformatetc,
+	/* [in] */ DWORD advf,
+	/* [out] */ __RPC__out DWORD* pdwConnection) {
+	return E_NOTIMPL;
+}
+HRESULT _stdcall AXClientSite::Uncache(
+	/* [in] */ DWORD dwConnection) {
+	return E_NOTIMPL;
+}
+HRESULT _stdcall AXClientSite::EnumCache(
+	/* [out] */ __RPC__deref_out_opt IEnumSTATDATA** ppenumSTATDATA) {
+	return E_NOTIMPL;
+}
+HRESULT _stdcall AXClientSite::InitCache(
+	/* [unique][in] */ __RPC__in_opt IDataObject* pDataObject) {
+	return E_NOTIMPL;
+}
+HRESULT _stdcall AXClientSite::SetData(
+	/* [unique][in] */ __RPC__in_opt FORMATETC* pformatetc,
+	/* [unique][in] */ __RPC__in_opt STGMEDIUM* pmedium,
+	/* [in] */ BOOL fRelease) {
+	return E_NOTIMPL;
+}
+
 
 // Other Methods
 void AX::Init(char* cls)
@@ -367,48 +400,13 @@ CLSID AX::GetCLSID()
 
 HRESULT _stdcall AXClientSite::InsertMenus(HMENU h, LPOLEMENUGROUPWIDTHS x)
 {
-	/*      AX * t = (AX*)ax;
-	if (t->AddMenu)
-	{
-	x->width[0] = 0;
-	x->width[2] = 0;
-	x->width[4] = 0;
-	//InsertMenu(h,0,MF_BYPOSITION | MF_POPUP,(int)Menu,"test");
-	return S_OK;
-	}
-	*/
+
 	return E_NOTIMPL;
 }
 HRESULT _stdcall AXClientSite::SetMenu(HMENU h, HOLEMENU hO, HWND hw)
 {
 	AX* t = (AX*)ax;
-	/*      if (t->AddMenu)
-	{
-	if (!h && !hO)
-	{
-	//::SetMenu(Window,Menu);
-	//DrawMenuBar(Window);
-	::SetMenu(Parent,Menu);
-	DrawMenuBar(Parent);
-	return S_OK;
-	}
 
-	//::SetMenu(Window,h);
-	//DrawMenuBar(Window);
-
-	//HMENU hm = GetMenu(Parent);
-	//AppendMenu(hm,MF_POPUP | MF_MENUBREAK,(int)h,0);
-	//::SetMenu(Parent,hm);
-	::SetMenu(Parent,h);
-	DrawMenuBar(Parent);
-
-	//hOleWindow = hw;
-	//OleSetMenuDescriptor(hO,Window,hw,0,0);
-	OleSetMenuDescriptor(hO,Parent,hw,0,0);
-
-	return S_OK;
-	}
-	*/
 	return E_NOTIMPL;
 }
 
@@ -462,73 +460,15 @@ HRESULT _stdcall AXClientSite::Invoke(
 		ax->DispatchNotificationFunction(&axd);
 		return S_OK;
 	}
-	/*
-	// Check for DWebBrowserEvent2 :: BeforeNavigate2
-	// dispid = 0xfa
-	char zv[1000] = {0};
 
-	if (dispIdMember == 0xfa && pDispParams->cArgs == 7)
-	{
-	for(unsigned int i = 0 ; i < pDispParams->cArgs ; i++)
-	{
-	if (pDispParams->rgvarg[i].vt == (VT_VARIANT | VT_BYREF))
-	{
-	VARIANT* x = pDispParams->rgvarg[i].pvarVal;
-	if (x->vt == VT_BSTR)
-	WideCharToMultiByte(0,0,x->bstrVal,-1,zv,1000,0,0);
-	if (strncmp(zv,"app:",4) == 0)
-	{
-	for(unsigned int x = 0 ; x < pDispParams->cArgs ; x++)
-	{
-	if (pDispParams->rgvarg[x].vt == (VT_BOOL|VT_BYREF))
-	{
-	VARIANT_BOOL* y = pDispParams->rgvarg[x].pboolVal;
-	*y = VARIANT_TRUE;
-	break;
-	}
-	}
-	return ProcessCmd(zv);
-	}
-	}
-	if (pDispParams->rgvarg[i].vt == VT_BSTR)
-	{
-	VARIANT* x = &pDispParams->rgvarg[i];
-	if (x->vt == VT_BSTR)
-	WideCharToMultiByte(0,0,x->bstrVal,-1,zv,1000,0,0);
-	if (strncmp(zv,"app:",4) == 0)
-	{
-	for(unsigned int x = 0 ; x < pDispParams->cArgs ; x++)
-	{
-	if (pDispParams->rgvarg[x].vt == (VT_BOOL|VT_BYREF))
-	{
-	VARIANT_BOOL* y = pDispParams->rgvarg[x].pboolVal;
-	*y = VARIANT_TRUE;
-	break;
-	}
-	}
-	return ProcessCmd(zv);
-	}
-	}
-	}
-	return S_OK;
-	}
-	*/
 	return S_OK;
 }
-
 
 void _stdcall AXClientSite::OnDataChange(FORMATETC* pFormatEtc, STGMEDIUM* pStgmed)
 {
 	// Notify our app that a change is being requested
 	return;
 }
-
-
-
-
-
-
-
 
 // Window Procedure for AX control
 LRESULT CALLBACK AXWndProc(HWND hh, UINT mm, WPARAM ww, LPARAM ll)
@@ -594,12 +534,8 @@ LRESULT CALLBACK AXWndProc(HWND hh, UINT mm, WPARAM ww, LPARAM ll)
 		if (ax->View)
 			hr = ax->View->SetAdvise(DVASPECT_CONTENT, 0, &ax->Site);
 
-
-
 		return 0;
 	}
-
-
 
 	if (mm == WM_DESTROY)
 	{
@@ -609,7 +545,6 @@ LRESULT CALLBACK AXWndProc(HWND hh, UINT mm, WPARAM ww, LPARAM ll)
 		ax->Clean();
 		return true;
 	}
-
 
 	if (mm == WM_COMMAND)
 	{
@@ -833,6 +768,20 @@ LRESULT CALLBACK AXWndProc(HWND hh, UINT mm, WPARAM ww, LPARAM ll)
 		return 0;
 	}
 
+	if (mm == WM_GETMINMAXINFO)
+		return 0;
+
+	if(mm == WM_NCCALCSIZE)
+		return 0;
+	
+	/*
+	if(mm == WM_NCCREATE)
+	{
+		CREATESTRUCT* createStruct = (CREATESTRUCT*)ll;
+		return true;
+	}
+	*/
+
 	return DefWindowProc(hh, mm, ww, ll);
 }
 
@@ -855,9 +804,9 @@ int AXConnectObject(IUnknown* Container, REFIID riid, IUnknown* Advisor, IConnec
 		{
 			*picp = icp;
 			hr = icp->Advise(Advisor, &tid);
-			//icp->Release();
+			icp->Release();
 		}
-		//icpc->Release();
+		icpc->Release();
 	}
 	return tid;
 }
@@ -875,22 +824,16 @@ void AXDisconnectObject(IConnectionPointContainer* icpc, IConnectionPoint* icp, 
 // Registration function
 ATOM AXRegister()
 {
-#ifdef WINCE
-	WNDCLASS wC = { 0 };
-#else
 	WNDCLASSEXW wC = { 0 };
 	wC.cbSize = sizeof(wC);
-#endif
+
 
 	wC.style = CS_GLOBALCLASS | CS_DBLCLKS;
 	wC.lpfnWndProc = AXWndProc;
 	wC.cbWndExtra = 4;
 	wC.hInstance = GetModuleHandle(0);
 	wC.lpszClassName = L"AX";
-#ifdef WINCE
-	return RegisterClassW(&wC);
-#else
+
 	return RegisterClassExW(&wC);
-#endif
 }
 

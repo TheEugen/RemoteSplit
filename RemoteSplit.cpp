@@ -6,6 +6,9 @@
 
 #include "Sharer.h"
 #include "Viewer.h"
+#include "AXClient.h"
+
+#pragma comment (lib, "Comctl32.lib")
 
 #define MAX_LOADSTRING 100
 
@@ -31,7 +34,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     // TODO: Hier Code einfügen.
     
     AXRegister();
-    
+    // registration failed
+    if(AXClientRegister(hInstance) == 0)
+    {
+        DWORD err = GetLastError();
+        return 0;
+    }
+
+    /*
+    WNDCLASSEXA wndClass = {};
+    if (GetClassInfoExA(hInstance, "AXClient", &wndClass))
+    {
+        // Class is registered
+    }
+    else
+    {
+        return 0;
+    }
+    */
+    //INITCOMMONCONTROLSEX initComm = { 0 };
+    //InitCommonControlsEx(&initComm);
+    CoInitialize(nullptr);
 
     // Globale Zeichenfolgen initialisieren
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -43,6 +66,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         return FALSE;
     }
+
+    
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_REMOTESPLIT));
 
@@ -152,7 +177,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 //PutStreamOnWindow(hInst, GetDlgItem(hWnd, IDC_VIEW_CLIENT_STREAM), viewer->getAPIViewer());
                 break;
             }
-            case IDC_BTN_SERVER_STARTSHARING:
+            case IDC_BTN_SERVER_STARTSHARING: //ah ok jetzt seh ich :)
             {
                 Sharer* sharer = new Sharer();
                 sharer->start(hWnd);

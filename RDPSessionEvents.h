@@ -4,63 +4,13 @@
 #include <atlbase.h>
 #include <rdpencomapi.h>
 
-static void OnAttendeeConnected(IDispatch* pAttendee) {
-	IRDPSRAPIAttendee* pRDPAtendee;
-	pAttendee->QueryInterface(__uuidof(IRDPSRAPIAttendee), (void**)&pRDPAtendee);
-	pRDPAtendee->put_ControlLevel(CTRL_LEVEL::CTRL_LEVEL_VIEW);
-	//AddText(infoLog, L"An attendee connected!\r\n");
-}
+#include "Utils.h"
 
-static void OnAttendeeDisconnected(IDispatch* pAttendee) {
-	IRDPSRAPIAttendeeDisconnectInfo* info;
-	ATTENDEE_DISCONNECT_REASON reason;
-	pAttendee->QueryInterface(__uuidof(IRDPSRAPIAttendeeDisconnectInfo), (void**)&info);
-	if (info->get_Reason(&reason) == S_OK) {
-		//char *textReason = NULL;
-		const char* textReason;
-		switch (reason) {
-		case ATTENDEE_DISCONNECT_REASON_APP:
-			textReason = "Viewer terminated session!";
-			break;
-		case ATTENDEE_DISCONNECT_REASON_ERR:
-			textReason = "Internal Error!";
-			break;
-		case ATTENDEE_DISCONNECT_REASON_CLI:
-			textReason = "Attendee requested termination!";
-			break;
-		default:
-			textReason = "Unknown reason!";
-		}
-		//AddText(infoLog, dupcat("Attendee disconnected\r\n   Reason: ", textReason, "\r\n", 0));
 
-	}
-	pAttendee->Release();
-	//picp = 0;
-	//picpc = 0;
-	//disconnect();
-}
 
-static void OnControlLevelChangeRequest(IDispatch* pAttendee, CTRL_LEVEL RequestedLevel)
-{	
-	IRDPSRAPIAttendee* pRDPAtendee;
-	pAttendee->QueryInterface(__uuidof(IRDPSRAPIAttendee), (void**)&pRDPAtendee);
-	if (pRDPAtendee->put_ControlLevel(RequestedLevel) == S_OK)
-	{
-		/*
-		switch (RequestedLevel)
-		{
-		case CTRL_LEVEL_NONE:
-			AddText(infoLog, L"Level changed to CTRL_LEVEL_NONE!\r\n");
-			break;
-		case CTRL_LEVEL_VIEW:
-			AddText(infoLog, L"Level changed to CTRL_LEVEL_VIEW!\r\n");
-			break;
-		case CTRL_LEVEL_INTERACTIVE:
-			AddText(infoLog, L"Level changed to CTRL_LEVEL_INTERACTIVE!\r\n");
-			break;
-		}
-		*/
-	}
+static void onViewerConnected(IDispatch* viewer)
+{
+
 }
 
 class RDPSessionEvents : public _IRDPSessionEvents
@@ -68,11 +18,87 @@ class RDPSessionEvents : public _IRDPSessionEvents
 private:
 
 	int m_refCount = 0;
+
+	HWND m_outputLog;
+
 protected:
 
 	virtual void OnViewerConnected() {}
 
+
 public:
+
+	void OnAttendeeConnected(IDispatch* pAttendee)
+	{
+		IRDPSRAPIAttendee* pRDPAtendee;
+		pAttendee->QueryInterface(__uuidof(IRDPSRAPIAttendee), (void**)&pRDPAtendee);
+		pRDPAtendee->put_ControlLevel(CTRL_LEVEL::CTRL_LEVEL_INTERACTIVE);
+		//AddText(infoLog, L"An attendee connected!\r\n");
+		outputLog(m_outputLog, L"A viewer connected!\n");
+	}
+
+	void OnAttendeeDisconnected(IDispatch* pAttendee)
+	{
+		IRDPSRAPIAttendeeDisconnectInfo* info;
+		ATTENDEE_DISCONNECT_REASON reason;
+		pAttendee->QueryInterface(__uuidof(IRDPSRAPIAttendeeDisconnectInfo), (void**)&info);
+		if (info->get_Reason(&reason) == S_OK) {
+			//char *textReason = NULL;
+			const wchar_t* textReason;
+			switch (reason) {
+			case ATTENDEE_DISCONNECT_REASON_APP:
+				textReason = L"Viewer terminated session!\n";
+				break;
+			case ATTENDEE_DISCONNECT_REASON_ERR:
+				textReason = L"Internal Error!\n";
+				break;
+			case ATTENDEE_DISCONNECT_REASON_CLI:
+				textReason = L"Attendee requested termination!\n";
+				break;
+			default:
+				textReason = L"Unknown reason!\n";
+			}
+			//AddText(infoLog, dupcat("Attendee disconnected\r\n   Reason: ", textReason, "\r\n", 0));
+			outputLog(m_outputLog, L"Viewer disconnected | Reason: ");
+			outputLog(m_outputLog, textReason);
+
+		}
+		pAttendee->Release();
+		//picp = 0;
+		//picpc = 0;
+		//disconnect();
+	}
+
+	void OnControlLevelChangeRequest(IDispatch* pAttendee, CTRL_LEVEL RequestedLevel)
+	{
+		IRDPSRAPIAttendee* pRDPAtendee;
+		pAttendee->QueryInterface(__uuidof(IRDPSRAPIAttendee), (void**)&pRDPAtendee);
+		if (pRDPAtendee->put_ControlLevel(RequestedLevel) == S_OK)
+		{
+			/*
+			switch (RequestedLevel)
+			{
+			case CTRL_LEVEL_NONE:
+				AddText(infoLog, L"Level changed to CTRL_LEVEL_NONE!\r\n");
+				break;
+			case CTRL_LEVEL_VIEW:
+				AddText(infoLog, L"Level changed to CTRL_LEVEL_VIEW!\r\n");
+				break;
+			case CTRL_LEVEL_INTERACTIVE:
+				AddText(infoLog, L"Level changed to CTRL_LEVEL_INTERACTIVE!\r\n");
+				break;
+			}
+			*/
+		}
+	}
+
+
+	void setOutputLog(HWND outputLog) { m_outputLog = outputLog; }
+
+	void OnViewerConnectFailed()
+	{
+		outputLog(m_outputLog, L"Viewer tried to connect and failed!\n");
+	}
 
 	HRESULT __stdcall QueryInterface(REFIID riid, void** pp) override
 	{
@@ -111,6 +137,8 @@ public:
 		case DISPID_RDPSRAPI_EVENT_ON_CTRLLEVEL_CHANGE_REQUEST:
 			OnControlLevelChangeRequest(dispParams->rgvarg[1].pdispVal, (CTRL_LEVEL)dispParams->rgvarg[0].intVal);
 			break;
+		case DISPID_RDPSRAPI_EVENT_ON_VIEWER_CONNECTFAILED:
+			OnViewerConnectFailed();
 		}
 		return S_OK;
 	}
